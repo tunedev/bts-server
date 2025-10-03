@@ -52,6 +52,7 @@ func (c *Client) autoMigrate() error {
         max_guests INTEGER NOT NULL,
         invitation_token TEXT NOT NULL UNIQUE,
         couple_id TEXT NOT NULL,
+				default_category BOOLEAN NOT NULL DEFAULT false,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (couple_id) REFERENCES couples(id)
     );`

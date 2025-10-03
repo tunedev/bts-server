@@ -59,7 +59,8 @@ func main() {
 	seedCategory(db, "Groom's Friends", 50, groom)
 	seedCategory(db, "Groom's siblings Friends", 10, groom)
 	seedCategory(db, "Bride's siblings Friends", 10, bride)
-
+	seedCategory(db, "Bride's default website rsvp", 0, bride)
+	seedCategory(db, "Grooms's default website rsvp", 0, groom)
 	log.Println("Database seeding complete. ✅")
 }
 
@@ -108,6 +109,7 @@ func seedCategory(c database.Client, name string, maxGuests int, couple database
 		MaxGuests:       maxGuests,
 		CoupleID:        couple.ID,
 		InvitationToken: &token,
+		DefaultCategory: maxGuests == 0,
 	})
 	if err != nil {
 		log.Printf("Error creating category %s: %v", name, err)

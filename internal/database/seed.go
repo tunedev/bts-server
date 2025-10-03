@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"log"
+	"os"
 
 	"github.com/google/uuid"
 )
@@ -12,18 +13,26 @@ import (
 func (c Client) SeedDatabase() error {
 	log.Println("Seeding database...")
 
-	// 1. Seed the couples (Bride and Groom)
-	bride, err := c.seedCouple("Diamond", "bride@example.com", "BRIDE")
+	groomsEmail := os.Getenv("GROOMS_EMAIL")
+	if groomsEmail == "" {
+		log.Fatal("GROOMS_EMAIL environment variable is not set")
+	}
+
+	bridesEmail := os.Getenv("BRIDES_EMAIL")
+	if bridesEmail == "" {
+		log.Fatal("BRIDES_EMAIL environment variable is not set")
+	}
+
+	bride, err := c.seedCouple("Diamond", bridesEmail, "BRIDE")
 	if err != nil {
 		return err
 	}
 
-	groom, err := c.seedCouple("Babatunde", "groom@example.com", "GROOM")
+	groom, err := c.seedCouple("Babatunde", groomsEmail, "GROOM")
 	if err != nil {
 		return err
 	}
 
-	// 2. Seed the guest categories for each couple
 	err = c.seedCategory("Bride's Family", 100, bride)
 	if err != nil {
 		return err
@@ -38,12 +47,6 @@ func (c Client) SeedDatabase() error {
 		return err
 	}
 	err = c.seedCategory("Groom's Friends", 50, groom)
-	if err != nil {
-		return err
-	}
-
-	// Add a "catch-all" category for website RSVPs that require approval
-	err = c.seedCategory("Bride's Website RSVPs", 20, bride)
 	if err != nil {
 		return err
 	}
@@ -98,6 +101,7 @@ func (c Client) seedCategory(name string, maxGuests int, couple Couple) error {
 		MaxGuests:       maxGuests,
 		CoupleID:        couple.ID,
 		InvitationToken: &token,
+		DefaultCategory: maxGuests == 0,
 	})
 	return err
 }

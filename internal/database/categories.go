@@ -3,6 +3,7 @@ package database
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -12,9 +13,10 @@ import (
 type GuestCategory struct {
 	ID              uuid.UUID `json:"id"`
 	Name            string    `json:"name"`
-	Side            string    `json:"side"` // "BRIDE" or "GROOM"
+	Side            string    `json:"side"`
 	MaxGuests       int       `json:"max_guests"`
-	InvitationToken *string   `json:"invitation_token"` // Optional direct RSVP link token
+	InvitationToken *string   `json:"invitation_token"`
+	DefaultCategory bool      `json:"default_category"`
 	CoupleID        uuid.UUID `json:"couple_id"`
 	CreatedAt       time.Time `json:"created_at"`
 }
@@ -26,6 +28,7 @@ type CreateCategoryParams struct {
 	MaxGuests       int       `json:"max_guests"`
 	InvitationToken *string   `json:"invitation_token"`
 	CoupleID        uuid.UUID `json:"couple_id"`
+	DefaultCategory bool      `json:"default_category"`
 }
 
 // CreateCategory inserts a new guest category into the database.
@@ -38,8 +41,9 @@ func (c Client) CreateCategory(params CreateCategoryParams) (GuestCategory, erro
         side,
         max_guests,
         invitation_token,
-        couple_id
-    ) VALUES (?, ?, ?, ?, ?, ?)`
+        couple_id,
+				default_category
+    ) VALUES (?, ?, ?, ?, ?, ?, ?)`
 
 	_, err := c.DB.Exec(
 		query,
@@ -49,6 +53,7 @@ func (c Client) CreateCategory(params CreateCategoryParams) (GuestCategory, erro
 		params.MaxGuests,
 		params.InvitationToken,
 		params.CoupleID,
+		params.DefaultCategory,
 	)
 	if err != nil {
 		return GuestCategory{}, err
@@ -127,6 +132,7 @@ func (c Client) GetCategoryByName(name string) (GuestCategory, error) {
 
 // ListCategoriesByCouple retrieves all guest categories managed by a specific couple.
 func (c Client) ListCategoriesByCouple(coupleID uuid.UUID) ([]GuestCategory, error) {
+	fmt.Println("Couple ID sent to me is ===>>>>>>>>>", coupleID)
 	query := `
     SELECT
         id,
@@ -210,4 +216,43 @@ func (c Client) GetApprovedGuestCount(categoryID uuid.UUID) (int, error) {
 	}
 
 	return count, nil
+}
+
+// GetCategoryBySideDefault retrieves a single default category by its for a particular couple side.
+func (c Client) GetCategoryBySideDefault(side string) (GuestCategory, error) {
+	query := `
+    SELECT
+        id,
+        name,
+        side,
+        max_guests,
+        invitation_token,
+        couple_id,
+        created_at
+    FROM guest_categories
+    WHERE side = ? 
+			AND 
+		WHERE default_category = true
+		ORDER BY created_at ASC
+		LIMIT = 1;
+		`
+
+	var category GuestCategory
+	err := c.DB.QueryRow(query, side).Scan(
+		&category.ID,
+		&category.Name,
+		&category.Side,
+		&category.MaxGuests,
+		&category.InvitationToken,
+		&category.CoupleID,
+		&category.CreatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return GuestCategory{}, nil
+		}
+		return GuestCategory{}, err
+	}
+
+	return category, nil
 }

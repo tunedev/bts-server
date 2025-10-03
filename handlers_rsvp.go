@@ -45,7 +45,11 @@ func (cfg *apiConfig) handlerGetCategoryMeta(w http.ResponseWriter, r *http.Requ
 		"remainingGuests": remainingSpots,
 	}
 
-	respondWithJSON(w, http.StatusOK, payload)
+	respondWithJSON(w, http.StatusOK, responseStructure{
+		Data:    payload,
+		Message: "Category Details retrieved sucessfully",
+		Success: true,
+	})
 }
 
 func (cfg *apiConfig) handlerSubmitRSVP(w http.ResponseWriter, r *http.Request) {
@@ -89,7 +93,15 @@ func (cfg *apiConfig) handlerSubmitRSVP(w http.ResponseWriter, r *http.Request) 
 			status = "APPROVED"
 		}
 	} else if params.SelectedSide != "" {
-		categoryID = uuid.NullUUID{Valid: false}
+		defaultSideCategory, err := cfg.db.GetCategoryBySideDefault(params.SelectedSide)
+		if err != nil {
+			respondWithError(w, http.StatusBadRequest, "invalid side value sent", err)
+			return
+		}
+		categoryID = uuid.NullUUID{
+			UUID:  defaultSideCategory.ID,
+			Valid: true,
+		}
 		status = "PENDING"
 	} else {
 		respondWithError(w, http.StatusBadRequest, "Missing required RSVP information.", err)
@@ -127,7 +139,11 @@ func (cfg *apiConfig) handlerSubmitRSVP(w http.ResponseWriter, r *http.Request) 
 		cfg.mailer.SendRSVPReceived(newRSVP.Email, newRSVP.GuestName)
 	}
 
-	respondWithJSON(w, http.StatusCreated, map[string]interface{}{"success": true, "status": newRSVP.Status})
+	respondWithJSON(w, http.StatusCreated, responseStructure{
+		Data:    map[string]string{"status": newRSVP.Status},
+		Message: "Status retrieved successfully",
+		Success: true,
+	})
 }
 
 func isUniqueConstraintError(err error) bool {

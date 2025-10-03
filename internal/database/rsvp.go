@@ -159,7 +159,7 @@ func (c Client) DeleteRSVP(id uuid.UUID) error {
 
 // ListAllRSVPs retrieves all RSVPs from the database.
 // If a non-empty status string is provided, it filters the results.
-func (c Client) ListAllRSVPs(status string) ([]RSVP, error) {
+func (c Client) ListAllRSVPs(status, side string) ([]RSVP, error) {
 	query := `
     SELECT
         id,
@@ -176,6 +176,11 @@ func (c Client) ListAllRSVPs(status string) ([]RSVP, error) {
 
 	// If a status filter is provided, add it to the query
 	if status != "" {
+		query += " WHERE status = ?"
+		args = append(args, status)
+	}
+
+	if side != "" {
 		query += " WHERE status = ?"
 		args = append(args, status)
 	}

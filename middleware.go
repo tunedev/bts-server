@@ -12,6 +12,7 @@ import (
 type contextKey string
 
 const coupleIDKey = contextKey("coupleID")
+const coupleAuthDetailsKey = contextKey("coupleAuthDetailsKey")
 
 // MiddlewareAuth is a middleware that protects admin routes.
 // It validates the JWT and attaches the couple's ID to the request context.
@@ -29,13 +30,14 @@ func middlewareAuth(handler http.HandlerFunc, db database.Client, jwtSecret stri
 			return
 		}
 
-		_, err = db.GetCouple(coupleID)
+		coupleDetail, err := db.GetCouple(coupleID)
 		if err != nil {
 			respondWithError(w, http.StatusUnauthorized, "User not found", err)
 			return
 		}
 
 		ctx := context.WithValue(r.Context(), coupleIDKey, coupleID)
+		ctx = context.WithValue(ctx, coupleAuthDetailsKey, coupleDetail)
 
 		handler.ServeHTTP(w, r.WithContext(ctx))
 	}
@@ -64,4 +66,9 @@ func middlewareCORS(next http.Handler) http.Handler {
 func GetCoupleIDFromContext(ctx context.Context) (uuid.UUID, bool) {
 	coupleID, ok := ctx.Value(coupleIDKey).(uuid.UUID)
 	return coupleID, ok
+}
+
+func GetCoupleDetailsFromCtx(ctx context.Context) (database.Couple, bool) {
+	coupleDetails, ok := ctx.Value(coupleAuthDetailsKey).(database.Couple)
+	return coupleDetails, ok
 }

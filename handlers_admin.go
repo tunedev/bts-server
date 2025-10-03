@@ -51,7 +51,11 @@ func (cfg *apiConfig) handlerLoginStart(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, map[string]string{"message": "OTP sent to your email."})
+	respondWithJSON(w, http.StatusOK, responseStructure{
+		Data:    map[string]any{"message": "OTP sent to your email."},
+		Success: true,
+		Message: "OTP Sent successfully",
+	})
 }
 
 // handlerLoginVerify validates an OTP and returns a session JWT.
@@ -78,10 +82,13 @@ func (cfg *apiConfig) handlerLoginVerify(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, map[string]string{"token": token})
+	respondWithJSON(w, http.StatusOK, responseStructure{
+		Data:    map[string]any{"token": token},
+		Success: true,
+		Message: "Login is successful",
+	})
 }
 
-// handlerCreateCategory creates a new guest category.
 func (cfg *apiConfig) handlerCreateCategory(w http.ResponseWriter, r *http.Request) {
 	// Assume coupleID is retrieved from context via auth middleware
 	coupleID, _ := GetCoupleIDFromContext(r.Context())
@@ -91,7 +98,7 @@ func (cfg *apiConfig) handlerCreateCategory(w http.ResponseWriter, r *http.Reque
 		respondWithError(w, http.StatusBadRequest, "Invalid request format", err)
 		return
 	}
-	params.CoupleID = coupleID // Associate with the logged-in user
+	params.CoupleID = coupleID
 
 	category, err := cfg.db.CreateCategory(params)
 	if err != nil {
@@ -99,10 +106,13 @@ func (cfg *apiConfig) handlerCreateCategory(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	respondWithJSON(w, http.StatusCreated, category)
+	respondWithJSON(w, http.StatusCreated, responseStructure{
+		Data:    category,
+		Message: "Created category successfully",
+		Success: true,
+	})
 }
 
-// handlerListCategories returns all categories for the logged-in couple.
 func (cfg *apiConfig) handlerListCategories(w http.ResponseWriter, r *http.Request) {
 	coupleID, _ := GetCoupleIDFromContext(r.Context())
 
@@ -112,24 +122,35 @@ func (cfg *apiConfig) handlerListCategories(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, categories)
+	respondWithJSON(w, http.StatusOK, responseStructure{
+		Data:    categories,
+		Message: "Categories retrieved successfully",
+		Success: true,
+	})
 }
 
-// handlerListRSVPs returns all RSVPs, with an optional filter for status.
 func (cfg *apiConfig) handlerListRSVPs(w http.ResponseWriter, r *http.Request) {
-	status := r.URL.Query().Get("status") // e.g., /api/admin/rsvps?status=PENDING
+	status := r.URL.Query().Get("status")
 
-	// This assumes a new DB function `ListAllRSVPs` that can optionally filter
-	rsvps, err := cfg.db.ListAllRSVPs(status)
+	coupleDetails, ok := GetCoupleDetailsFromCtx(r.Context())
+	if !ok {
+		respondWithError(w, http.StatusForbidden, http.StatusText(http.StatusForbidden), nil)
+		return
+	}
+
+	rsvps, err := cfg.db.ListAllRSVPs(status, coupleDetails.Side)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Could not retrieve RSVPs", err)
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, rsvps)
+	respondWithJSON(w, http.StatusOK, responseStructure{
+		Data:    rsvps,
+		Message: "Retrieved RSVP list successfully",
+		Success: true,
+	})
 }
 
-// handlerApproveRSVP updates the status of an RSVP.
 func (cfg *apiConfig) handlerApproveRSVP(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
 		RSVPID     uuid.UUID `json:"rsvpId"`
@@ -154,13 +175,11 @@ func (cfg *apiConfig) handlerApproveRSVP(w http.ResponseWriter, r *http.Request)
 				respondWithError(w, http.StatusBadRequest, "A category must be assigned to approve this RSVP", nil)
 				return
 			}
-			// Assign the category provided by the admin
 			if err := cfg.db.AssignCategoryToRSVP(rsvp.ID, params.CategoryID); err != nil {
 				respondWithError(w, http.StatusInternalServerError, "Could not assign category", err)
 				return
 			}
 		}
-		// You might also want to re-check category capacity here before approving
 	}
 
 	newStatus := params.Action + "D"
@@ -169,7 +188,6 @@ func (cfg *apiConfig) handlerApproveRSVP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// 4. Send notification email
 	switch newStatus {
 	case "APPROVED":
 		cfg.mailer.SendRSVPConfirmed(rsvp.Email, email.SendRSVPConfirmedParam{
@@ -182,5 +200,9 @@ func (cfg *apiConfig) handlerApproveRSVP(w http.ResponseWriter, r *http.Request)
 		cfg.mailer.SendRSVPRejected(rsvp.Email, rsvp.GuestName)
 	}
 
-	respondWithJSON(w, http.StatusOK, map[string]string{"message": "RSVP status updated successfully."})
+	respondWithJSON(w, http.StatusOK, responseStructure{
+		Data:    map[string]any{"message": "RSVP status updated successfully."},
+		Message: "Approved RSVP successfully",
+		Success: true,
+	})
 }
