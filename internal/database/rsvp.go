@@ -178,9 +178,15 @@ func (c Client) ListAllRSVPs(status, side string) ([]RSVP, error) {
 	if status != "" && side != "" {
 		query += " WHERE status = ? AND side = ?"
 		args = append(args, status)
+		args = append(args, side)
 	}
 
-	query += " ORDER BY submitted_at DESC"
+	if status == "" && side != "" {
+		query += " WHERE status = ? AND side = ?"
+		args = append(args, side)
+	}
+
+	query += " ORDER BY submitted_at ASC"
 
 	rows, err := c.DB.Query(query, args...)
 	if err != nil {
