@@ -3,10 +3,10 @@
 set -e
 
 echo "Building the Go server..."
-go build -o server .
+/usr/local/go/bin/go build -o server .
 
 echo "Building the seed script..."
-go build -o seed-runner ./cmd/seed/.
+/usr/local/go/bin/go build -o seed-runner ./cmd/seed/.
 
 echo "Starting the server in the background..."
 ./server &
