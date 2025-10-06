@@ -175,13 +175,8 @@ func (c Client) ListAllRSVPs(status, side string) ([]RSVP, error) {
 	args := []interface{}{}
 
 	// If a status filter is provided, add it to the query
-	if status != "" {
-		query += " WHERE status = ?"
-		args = append(args, status)
-	}
-
-	if side != "" {
-		query += " WHERE status = ?"
+	if status != "" && side != "" {
+		query += " WHERE status = ? AND side = ?"
 		args = append(args, status)
 	}
 
