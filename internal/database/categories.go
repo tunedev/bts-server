@@ -230,11 +230,9 @@ func (c Client) GetCategoryBySideDefault(side string) (GuestCategory, error) {
         couple_id,
         created_at
     FROM guest_categories
-    WHERE side = ? 
-			AND 
-		WHERE default_category = true
+    WHERE side = ? AND default_category = true
 		ORDER BY created_at ASC
-		LIMIT = 1;
+		LIMIT 1;
 		`
 
 	var category GuestCategory
