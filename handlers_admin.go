@@ -76,7 +76,7 @@ func (cfg *apiConfig) handlerLoginVerify(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	token, err := auth.MakeJWT(couple.ID, cfg.jwtSecret, time.Hour*24)
+	token, err := auth.MakeJWT(couple.ID, cfg.jwtSecret, time.Hour*(24*120))
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Could not create session token", err)
 		return
