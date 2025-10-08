@@ -38,6 +38,11 @@
         text-align: center;
         color: #888;
       }
+      .location-link {
+        color: #586458;
+        text-decoration: none;
+        font-weight: bold;
+      }
     </style>
   </head>
   <body>
@@ -46,7 +51,16 @@
         <h1>Diamond & Babatunde</h1>
       </div>
       <div class="content">{{.Body}}</div>
-      <div class="footer">November 22, 2025 | Nelos Place, Ikeja</div>
+      <div class="footer">
+        November 22, 2025 {{if .ShowLocationLink}} |
+        <a
+          href="https://www.google.com/maps/search/?api=1&query=Nelos+Place+Ikeja"
+          class="location-link"
+          target="_blank"
+          >Nelos Place, Ikeja</a
+        >
+        {{end}}
+      </div>
     </div>
   </body>
 </html>

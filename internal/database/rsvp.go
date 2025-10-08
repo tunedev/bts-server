@@ -3,6 +3,7 @@ package database
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -162,7 +163,7 @@ func (c Client) DeleteRSVP(id uuid.UUID) error {
 func (c Client) ListAllRSVPs(status, side string) ([]RSVP, error) {
 	query := `
     SELECT
-        id,
+        rsvps.id,
         guest_name,
         number_of_guests,
         email,
@@ -170,26 +171,31 @@ func (c Client) ListAllRSVPs(status, side string) ([]RSVP, error) {
         status,
         category_id,
         submitted_at
-    FROM rsvps`
+    FROM rsvps
+		JOIN guest_categories gc ON (gc.id == rsvps.category_id)`
 
 	args := []interface{}{}
 
 	// If a status filter is provided, add it to the query
 	if status != "" && side != "" {
-		query += " WHERE status = ? AND side = ?"
+		query += " WHERE status = ? AND gc.side = ?"
 		args = append(args, status)
 		args = append(args, side)
 	}
 
 	if status == "" && side != "" {
-		query += " WHERE status = ? AND side = ?"
+		query += " WHERE gc.side = ?"
 		args = append(args, side)
 	}
 
 	query += " ORDER BY submitted_at ASC"
 
+	fmt.Println("database query details", query, args)
+
 	rows, err := c.DB.Query(query, args...)
 	if err != nil {
+		fmt.Println("database query full error gist ===>>>>>>", err)
+
 		return nil, err
 	}
 	defer rows.Close()

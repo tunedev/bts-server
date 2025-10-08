@@ -38,12 +38,12 @@ func (m Mailer) SendRSVPConfirmed(to string, param SendRSVPConfirmedParam) error
 	data := struct {
 		GuestName      string
 		NumberOfGuests int
-		QRCode         string
+		QRCode         template.URL
 		Phone          string
 	}{
 		GuestName:      param.GuestName,
 		NumberOfGuests: param.NumberOfGuests,
-		QRCode:         qrCodeDataURL,
+		QRCode:         template.URL(qrCodeDataURL),
 		Phone:          param.Phone,
 	}
 
@@ -59,8 +59,12 @@ func (m Mailer) SendRSVPConfirmed(to string, param SendRSVPConfirmedParam) error
 	}
 
 	// Now parse the main layout and inject the content
-	layoutData := struct{ Body template.HTML }{
-		Body: template.HTML(contentBody.String()),
+	layoutData := struct {
+		Body             template.HTML
+		ShowLocationLink bool
+	}{
+		Body:             template.HTML(contentBody.String()),
+		ShowLocationLink: true,
 	}
 
 	layoutTmpl, err := template.New("layout.html").ParseFS(templateFS, "templates/layout.html")

@@ -2,11 +2,13 @@ package main
 
 import (
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 
 	"github.com/tunedev/bts2025/server/internal/database"
 	"github.com/tunedev/bts2025/server/internal/email"
+	"github.com/tunedev/bts2025/server/internal/logger"
 
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
@@ -18,6 +20,7 @@ type apiConfig struct {
 	platform  string
 	port      string
 	mailer    email.Mailer
+	logger    *slog.Logger
 }
 
 func main() {
@@ -63,12 +66,15 @@ func main() {
 		emailFromName = "noReply"
 	}
 
+	appLogger := logger.New()
+
 	cfg := apiConfig{
 		db:        db,
 		jwtSecret: jwtSecret,
 		platform:  platform,
 		port:      port,
 		mailer:    email.NewMailer(resendAPIKey, emailFromName, weddingFromEmail),
+		logger:    appLogger,
 	}
 
 	mux := http.NewServeMux()
@@ -87,11 +93,24 @@ func main() {
 	mux.HandleFunc("GET /api/admin/rsvps", middlewareAuth(cfg.handlerListRSVPs, cfg.db, cfg.jwtSecret))
 	mux.HandleFunc("POST /api/admin/rsvps/approve", middlewareAuth(cfg.handlerApproveRSVP, cfg.db, cfg.jwtSecret))
 
+	mux.HandleFunc("GET /api/healthz", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(http.StatusText(http.StatusOK) + "\n"))
+	})
+
+	handlerWithCORS := middlewareCORS(mux)
+	finalhandler := middlewareLogger(handlerWithCORS, cfg.logger)
+
 	srv := &http.Server{
 		Addr:    ":" + port,
-		Handler: middlewareCORS(mux),
+		Handler: finalhandler,
 	}
 
-	log.Printf("Serving on: http://localhost:%s/app/\n", port)
-	log.Fatal(srv.ListenAndServe())
+	cfg.logger.Info("Server starting", "address", srv.Addr)
+	err = srv.ListenAndServe()
+	if err != nil {
+		cfg.logger.Error("Server failed to start", "error", err)
+		os.Exit(1)
+	}
 }

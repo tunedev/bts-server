@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/tunedev/bts2025/server/internal/auth"
@@ -71,4 +73,14 @@ func GetCoupleIDFromContext(ctx context.Context) (uuid.UUID, bool) {
 func GetCoupleDetailsFromCtx(ctx context.Context) (database.Couple, bool) {
 	coupleDetails, ok := ctx.Value(coupleAuthDetailsKey).(database.Couple)
 	return coupleDetails, ok
+}
+
+func middlewareLogger(next http.Handler, logger *slog.Logger) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+
+		next.ServeHTTP(w, r)
+
+		logger.Info("request handled", "method", r.Method, "path", r.URL.Path, "duration", time.Since(start).String())
+	})
 }
