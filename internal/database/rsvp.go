@@ -3,7 +3,6 @@ package database
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -190,11 +189,8 @@ func (c Client) ListAllRSVPs(status, side string) ([]RSVP, error) {
 
 	query += " ORDER BY submitted_at ASC"
 
-	fmt.Println("database query details", query, args)
-
 	rows, err := c.DB.Query(query, args...)
 	if err != nil {
-		fmt.Println("database query full error gist ===>>>>>>", err)
 
 		return nil, err
 	}

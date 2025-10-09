@@ -173,6 +173,8 @@ func (cfg *apiConfig) handlerApproveRSVP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	newStatusSuffix := ""
+
 	if params.Action == "APPROVE" {
 		if !rsvp.CategoryID.Valid {
 			if params.CategoryID == uuid.Nil {
@@ -184,9 +186,12 @@ func (cfg *apiConfig) handlerApproveRSVP(w http.ResponseWriter, r *http.Request)
 				return
 			}
 		}
+		newStatusSuffix = "D"
+	} else {
+		newStatusSuffix = "ED"
 	}
 
-	newStatus := params.Action + "D"
+	newStatus := params.Action + newStatusSuffix
 	if err := cfg.db.UpdateRSVPStatus(rsvp.ID, newStatus); err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to update RSVP status", err)
 		return

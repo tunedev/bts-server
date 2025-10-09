@@ -3,7 +3,6 @@ package database
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -132,7 +131,6 @@ func (c Client) GetCategoryByName(name string) (GuestCategory, error) {
 
 // ListCategoriesByCouple retrieves all guest categories managed by a specific couple.
 func (c Client) ListCategoriesByCouple(coupleID uuid.UUID) ([]GuestCategory, error) {
-	fmt.Println("Couple ID sent to me is ===>>>>>>>>>", coupleID)
 	query := `
     SELECT
         id,

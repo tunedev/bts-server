@@ -84,7 +84,9 @@ func (m Mailer) SendRSVPConfirmed(to string, param SendRSVPConfirmedParam) error
 // SendLoginOTP sends the one-time password for admin login using the main layout.
 func (m Mailer) SendLoginOTP(to, otp string) error {
 	subject := "Your Sign-In Code for BTS Wedding Admin"
-	data := struct{ OTP string }{OTP: otp}
+	data := struct {
+		OTP string
+	}{OTP: otp}
 
 	// The 'body' here is the final, fully-rendered HTML
 	body, err := m.parseLayout("otp.html", data)
@@ -97,7 +99,9 @@ func (m Mailer) SendLoginOTP(to, otp string) error {
 // SendRSVPReceived notifies a guest that their RSVP is pending, using the main layout.
 func (m Mailer) SendRSVPReceived(to, guestName string) error {
 	subject := "We've Received Your RSVP!"
-	data := struct{ GuestName string }{GuestName: guestName}
+	data := struct {
+		GuestName string
+	}{GuestName: guestName}
 
 	body, err := m.parseLayout("rsvp_pending.html", data)
 	if err != nil {
@@ -109,7 +113,10 @@ func (m Mailer) SendRSVPReceived(to, guestName string) error {
 // SendRSVPRejected notifies a guest that their RSVP was rejected, using the main layout.
 func (m Mailer) SendRSVPRejected(to, guestName string) error {
 	subject := "An Update on Your RSVP"
-	data := struct{ GuestName string }{GuestName: guestName}
+	data := struct {
+		GuestName        string
+		ShowLocationLink bool
+	}{GuestName: guestName}
 
 	body, err := m.parseLayout("rsvp_rejected.html", data)
 	if err != nil {
@@ -135,7 +142,10 @@ func (m Mailer) parseLayout(contentFile string, data interface{}) (string, error
 		return "", err
 	}
 
-	layoutData := struct{ Body template.HTML }{
+	layoutData := struct {
+		Body             template.HTML
+		ShowLocationLink bool
+	}{
 		Body: template.HTML(contentBody.String()),
 	}
 
