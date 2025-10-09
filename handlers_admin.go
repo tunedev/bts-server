@@ -134,15 +134,13 @@ func (cfg *apiConfig) handlerListCategories(w http.ResponseWriter, r *http.Reque
 }
 
 func (cfg *apiConfig) handlerListRSVPs(w http.ResponseWriter, r *http.Request) {
-	status := r.URL.Query().Get("status")
-
 	coupleDetails, ok := GetCoupleDetailsFromCtx(r.Context())
 	if !ok {
 		respondWithError(w, http.StatusForbidden, http.StatusText(http.StatusForbidden), nil)
 		return
 	}
 
-	rsvps, err := cfg.db.ListAllRSVPs(status, coupleDetails.Side)
+	rsvps, err := cfg.db.ListAllRSVPs("", coupleDetails.Side)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Could not retrieve RSVPs", err)
 		return
