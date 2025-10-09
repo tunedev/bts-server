@@ -53,12 +53,11 @@ func main() {
 	}
 
 	// 2. Seed the guest categories
-	seedCategory(db, "Bride's Family", 100, bride)
-	seedCategory(db, "Bride's Friends", 50, bride)
-	seedCategory(db, "Groom's Family", 100, groom)
-	seedCategory(db, "Groom's Friends", 50, groom)
+	seedCategory(db, "Bride's Friends", 40, bride)
+	seedCategory(db, "Groom's Friends", 40, groom)
 	seedCategory(db, "Groom's siblings Friends", 10, groom)
-	seedCategory(db, "Bride's siblings Friends", 10, bride)
+	seedCategory(db, "Bride's siblings Friends", 8, bride)
+	seedCategory(db, "CCI Friends", 24, groom)
 	seedCategory(db, "Bride's default website rsvp", 0, bride)
 	seedCategory(db, "Grooms's default website rsvp", 0, groom)
 	log.Println("Database seeding complete. ✅")

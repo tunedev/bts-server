@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/tunedev/bts2025/server/internal/auth"     // Adjust import path
@@ -22,6 +23,8 @@ func (cfg *apiConfig) handlerLoginStart(w http.ResponseWriter, r *http.Request) 
 		respondWithError(w, http.StatusBadRequest, "Invalid request format", err)
 		return
 	}
+
+	params.Email = strings.ToLower(params.Email)
 
 	couple, err := cfg.db.GetCoupleByEmail(params.Email)
 	if err != nil {
@@ -70,6 +73,7 @@ func (cfg *apiConfig) handlerLoginVerify(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	params.Email = strings.ToLower(params.Email)
 	couple, err := cfg.db.VerifyOTPForCouple(params.Email, params.OTP)
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "Invalid or expired OTP", err)
